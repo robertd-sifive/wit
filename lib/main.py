@@ -71,6 +71,9 @@ def main() -> None:
 
     subparsers.add_parser('fetch-scala', help='Fetch dependencies for Scala projects')
 
+    foreach_parser = subparsers.add_parser('foreach', help='run a command in each package\'s working directory')
+    foreach_parser.add_argument('shell_command')
+
     args = parser.parse_args()
     if args.verbose > 3:
         log.setLevel('TRACE')
@@ -129,6 +132,9 @@ def main() -> None:
 
             elif args.command == 'fetch-scala':
                 fetch_scala(ws, args, agg=False)
+
+            elif args.command == 'foreach':
+                foreach(ws, args)
         except WitUserError as e:
             error(e)
 
@@ -300,6 +306,14 @@ def fetch_scala(ws, args, agg=True) -> None:
 
         log.info("Fetching ivy dependencies...")
         scalaplugin.fetch_ivy_dependencies(files, install_dir, ivy_cache_dir)
+
+
+# NOTE: we could run commands in parallel but the potential for unexpected behaviour
+# may not be worth it
+def foreach(ws, args) -> None:
+    pkg_folders = [f.parent for f in ws.path.glob('*/wit-manifest.json')]
+    for f in pkg_folders:
+        subprocess.call(args.shell_command, shell=True, cwd=str(f))
 
 
 def version() -> None:
