@@ -311,7 +311,7 @@ def fetch_scala(ws, args, agg=True) -> None:
 # NOTE: we could run commands in parallel but the potential for unexpected behaviour
 # may not be worth it
 def foreach(ws, args) -> None:
-    pkg_folders = [f.parent for f in ws.path.glob('*/wit-manifest.json')]
+    pkg_folders = [pkg.get_path() for pkg in ws.lock.packages]
     for f in pkg_folders:
         subprocess.call(args.shell_command, shell=True, cwd=str(f))
 
