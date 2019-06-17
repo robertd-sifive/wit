@@ -71,8 +71,10 @@ def main() -> None:
 
     subparsers.add_parser('fetch-scala', help='Fetch dependencies for Scala projects')
 
-    foreach_parser = subparsers.add_parser('foreach', help='run a command in each package\'s working directory')
+    foreach_parser = subparsers.add_parser('foreach', help=("run a command in each "
+                                                            "package's working directory"))
     foreach_parser.add_argument('shell_command')
+    foreach_parser.add_argument('--dry-run', dest="dry_run", action="store_true")
 
     args = parser.parse_args()
     if args.verbose > 3:
@@ -311,9 +313,15 @@ def fetch_scala(ws, args, agg=True) -> None:
 # NOTE: we could run commands in parallel but the potential for unexpected behaviour
 # may not be worth it
 def foreach(ws, args) -> None:
+    if args.dry_run:
+        log.info("Skipping execution because of --dry-run. Would have run:")
+
     pkg_folders = [pkg.get_path() for pkg in ws.lock.packages]
     for f in pkg_folders:
-        subprocess.call(args.shell_command, shell=True, cwd=str(f))
+        if args.dry_run:
+            log.info("cd {} && {}".format(f, args.shell_command))
+        else:
+            subprocess.call(args.shell_command, shell=True, cwd=str(f))
 
 
 def version() -> None:
