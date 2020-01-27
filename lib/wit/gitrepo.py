@@ -47,9 +47,10 @@ class GitRepo:
     """
     PKG_DEPENDENCY_FILE = "wit-manifest.json"
 
-    def __init__(self, name, wsroot: Path):
+    def __init__(self, name, wsroot: Path, depth: int = 2 ** 30):
         self.name = name
         self.path = wsroot / name
+        self.depth = depth
         # Cache known hashes for quick lookup
         self._known_hashes = set()  # type: Set[str]
 
@@ -70,17 +71,27 @@ class GitRepo:
     # name is needed for generating error messages
     def download(self, source, name):
         if not GitRepo.is_git_repo(self.path):
-            self.clone(source, name)
+            self.clone(source, name, self.depth)
         self.fetch(source, name)
 
     # name is needed for generating error messages
-    def clone(self, source, name):
+    def clone(self, source, name, depth):
         assert not GitRepo.is_git_repo(self.path), \
             "Trying to clone and checkout into existing git repo!"
         log.info('Cloning {}...'.format(self.name))
 
-        proc = self._git_command("clone", "--no-checkout", source, str(self.path),
-                                 working_dir=str(self.path.parent))
+        if depth > 0:
+            proc = self._git_command("clone", "--depth", depth, "--no-checkout",
+                                     source, str(self.path),
+                                     working_dir=str(self.path.parent))
+            self._git_command("config", "remote.origin.fetch",
+                              '+refs/heads/*:refs/remotes/origin/*')
+            self._git_command('fetch')
+
+        else:
+            proc = self._git_command("clone", "--no-checkout", source, str(self.path),
+                                     working_dir=str(self.path.parent))
+
         try:
             self._git_check(proc)
         except GitError:
