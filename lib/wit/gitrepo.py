@@ -47,7 +47,7 @@ class GitRepo:
     """
     PKG_DEPENDENCY_FILE = "wit-manifest.json"
 
-    def __init__(self, name, wsroot: Path, depth: int = 2 ** 30):
+    def __init__(self, name, wsroot: Path, depth: int = 1):
         self.name = name
         self.path = wsroot / name
         self.depth = depth
@@ -80,15 +80,24 @@ class GitRepo:
             "Trying to clone and checkout into existing git repo!"
         log.info('Cloning {}...'.format(self.name))
 
+        # Actually clone git repository, --no-checkout is used so a specific
+        # commit can be checked out later
+
+        # Allow depth to be passed per repo
         if depth > 0:
+            # shallow clone
             proc = self._git_command("clone", "--depth", depth, "--no-checkout",
                                      source, str(self.path),
                                      working_dir=str(self.path.parent))
+
+            # these two commands are needed so shallow clones are still aware
+            # of the full history without actually downloading all of it
             self._git_command("config", "remote.origin.fetch",
                               '+refs/heads/*:refs/remotes/origin/*')
-            self._git_command('fetch')
+            self.fetch(source, name)
 
         else:
+            # deep clone
             proc = self._git_command("clone", "--no-checkout", source, str(self.path),
                                      working_dir=str(self.path.parent))
 
@@ -296,8 +305,9 @@ class GitRepo:
 
     def _git_command(self, *args, working_dir=None):
         cwd = str(self.path) if working_dir is None else str(working_dir)
-        log.debug("Executing [{}] in [{}]".format(' '.join(['git', *args]), cwd))
-        proc = subprocess.run(['git', *args],
+        str_args = [str(_arg) for _arg in args]
+        log.debug("Executing [{}] in [{}]".format(' '.join(['git'] + str_args), cwd))
+        proc = subprocess.run(['git', *str_args],
                               stdout=subprocess.PIPE,
                               stderr=subprocess.PIPE,
                               universal_newlines=True,

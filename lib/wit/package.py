@@ -84,7 +84,7 @@ class Package:
 
         self.repo = GitRepo(self.name, repo_root)
 
-        # we carefully use Python's boolean expression evalution short-circuiting
+        # we carefully use Python's boolean expression evaluation short-circuiting
         # to avoid calling has_commit if the repo does not exist
         if (not self.repo.path.exists()
                 or not self.repo.has_commit(revision)
