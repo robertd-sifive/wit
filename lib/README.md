@@ -23,7 +23,7 @@ The best way to learn wit is to check out the [tutorial](share/doc/wit/tutorial.
 
 ### Installation
 
-Wake is intended to be as lightweight as possible. It simply requires `git` and `Python` version 3.5 or greater.
+Wit is intended to be as lightweight as possible. It simply requires `git` and `Python` version 3.5 or greater.
 
 You can simply clone the repo and add it to your `PATH`, for example:
 ```bash
@@ -40,6 +40,26 @@ make install PREFIX=/path/to/installation
 
 The Makefile will create a directory with the version (it even works for commits between tags)
 and copy the contents of contents of the local clone excluding the tests and metadata.
+
+### Installation with pip
+Wit is not currently registered with [pypi](https://pypi.org), however it can be installed directly from Github using pip:
+
+```bash
+pip install -U git+https://github.com/sifive/wit@master#egg=wit&subdirectory=lib
+```
+
+This will also place a `wit` executable in your python (virtual) environment’s `bin` directory, which you may need to add to your shell’s $PATH.
+
+This url scheme can be used to point at a specific commit hash. Note that the source code is located in `./lib`, so the subdirectory must be specified in the url. Showing each part of the url more explicitly:
+
+```bash
+package_name='wit
+commit_hash='master'
+source_url='https://github.com/sifive'
+source_name='https://github.com/sifive/wit'
+relative_src_dir='lib'
+pip install -U 'git+'"$source_url"'@'"$commit_hash"'#egg='"$package_name"'&subdirectory='"$relative_source_dir"
+```
 
 
 ### Creating a workspace
